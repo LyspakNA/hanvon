@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>Hanvon 1001 — Android Settings Test</title>
+<style>
+body{font-family:Arial,sans-serif;margin:0 auto;padding:18px;max-width:620px;background:white;color:black;line-height:1.5}h1{font-size:24px}h2{font-size:19px;margin-top:30px}.btn{display:block;box-sizing:border-box;padding:16px;border:2px solid #111;border-radius:8px;margin:12px 0;text-decoration:none;color:#000;font-weight:bold;background:#fff}.btn:focus,.btn:active{background:#ddd}small{display:block;color:#333;margin-top:4px;font-weight:normal}pre{white-space:pre-wrap;overflow-wrap:anywhere;border:1px solid #777;padding:12px}#log{border:1px solid #999;padding:12px;min-height:60px}button{background:white;color:black;padding:12px;border:1px solid #111;font-size:16px}</style>
+</head>
+<body>
+<h1>Hanvon 1001 — проверка вызовов Android</h1>
+<p>Эта страница ничего не устанавливает и не меняет настройки. Нажми кнопку и посмотри, откроется ли внешний экран Android. Если ничего не происходит, вернись сюда и попробуй другую.</p>
+<h2>Попытка открыть настройки</h2>
+<a class="btn" href="intent:#Intent;action=android.settings.SETTINGS;end">1. Android Settings <small>Intent URI: общие настройки</small></a>
+<a class="btn" href="intent:#Intent;action=android.settings.APPLICATION_DEVELOPMENT_SETTINGS;end">2. Developer Options <small>Intent URI: параметры разработчика</small></a>
+<a class="btn" href="intent:#Intent;action=android.settings.APPLICATION_SETTINGS;end">3. App Settings <small>Intent URI: список приложений</small></a>
+<a class="btn" href="intent:#Intent;action=android.settings.MANAGE_UNKNOWN_APP_SOURCES;end">4. Unknown app sources <small>Intent URI: разрешения установки APK</small></a>
+<h2>Альтернативные схемы</h2>
+<a class="btn" href="intent://settings/#Intent;scheme=android-app;package=com.android.settings;end">5. Запуск пакета Settings <small>Проба package-based intent; может не поддерживаться</small></a>
+<a class="btn" href="mailto:test@example.com?subject=Hanvon%20WebView%20test">6. Проверка внешних ссылок <small>mailto: — проверяет, разрешён ли запуск других приложений; письмо не отправляется</small></a>
+<a class="btn" href="https://example.com">7. Обычный HTTPS-переход <small>Проверка перехода между веб-сайтами</small></a>
+<h2>Информация о WebView</h2>
+<pre id="info">JavaScript не выполнен (возможно, отключён).</pre>
+<h2>Журнал нажатий</h2>
+<div id="log">Пока нет событий</div>
+<script>
+(function(){
+var info=document.getElementById('info'), log=document.getElementById('log');
+info.textContent='User-Agent: '+navigator.userAgent+'\nJavaScript: включён\nURL: '+location.href;
+var links=document.querySelectorAll('a');
+for(var i=0;i<links.length;i++){
+  links[i].addEventListener('click',function(){
+    var line=document.createElement('div');line.textContent='Нажата: '+this.textContent.replace(/\s+/g,' ').trim();
+    if(log.textContent==='Пока нет событий')log.textContent='';
+    log.insertBefore(line,log.firstChild);
+  });
+}
+})();
+</script>
+<p><strong>Важно:</strong> даже если вызовы не сработали, это не доказывает, что ADB или установка APK невозможны. WebView может просто блокировать нестандартные URI.</p>
+</body>
+</html>
