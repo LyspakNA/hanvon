@@ -1,42 +1,74 @@
-<!doctype html>
-<html lang="ru">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-<title>Hanvon 1001 — Android Settings Test</title>
-<style>
-body{font-family:Arial,sans-serif;margin:0 auto;padding:18px;max-width:620px;background:white;color:black;line-height:1.5}h1{font-size:24px}h2{font-size:19px;margin-top:30px}.btn{display:block;box-sizing:border-box;padding:16px;border:2px solid #111;border-radius:8px;margin:12px 0;text-decoration:none;color:#000;font-weight:bold;background:#fff}.btn:focus,.btn:active{background:#ddd}small{display:block;color:#333;margin-top:4px;font-weight:normal}pre{white-space:pre-wrap;overflow-wrap:anywhere;border:1px solid #777;padding:12px}#log{border:1px solid #999;padding:12px;min-height:60px}button{background:white;color:black;padding:12px;border:1px solid #111;font-size:16px}</style>
-</head>
-<body>
-<h1>Hanvon 1001 — проверка вызовов Android</h1>
-<p>Эта страница ничего не устанавливает и не меняет настройки. Нажми кнопку и посмотри, откроется ли внешний экран Android. Если ничего не происходит, вернись сюда и попробуй другую.</p>
-<h2>Попытка открыть настройки</h2>
-<a class="btn" href="intent:#Intent;action=android.settings.SETTINGS;end">1. Android Settings <small>Intent URI: общие настройки</small></a>
-<a class="btn" href="intent:#Intent;action=android.settings.APPLICATION_DEVELOPMENT_SETTINGS;end">2. Developer Options <small>Intent URI: параметры разработчика</small></a>
-<a class="btn" href="intent:#Intent;action=android.settings.APPLICATION_SETTINGS;end">3. App Settings <small>Intent URI: список приложений</small></a>
-<a class="btn" href="intent:#Intent;action=android.settings.MANAGE_UNKNOWN_APP_SOURCES;end">4. Unknown app sources <small>Intent URI: разрешения установки APK</small></a>
-<h2>Альтернативные схемы</h2>
-<a class="btn" href="intent://settings/#Intent;scheme=android-app;package=com.android.settings;end">5. Запуск пакета Settings <small>Проба package-based intent; может не поддерживаться</small></a>
-<a class="btn" href="mailto:test@example.com?subject=Hanvon%20WebView%20test">6. Проверка внешних ссылок <small>mailto: — проверяет, разрешён ли запуск других приложений; письмо не отправляется</small></a>
-<a class="btn" href="https://example.com">7. Обычный HTTPS-переход <small>Проверка перехода между веб-сайтами</small></a>
-<h2>Информация о WebView</h2>
-<pre id="info">JavaScript не выполнен (возможно, отключён).</pre>
-<h2>Журнал нажатий</h2>
-<div id="log">Пока нет событий</div>
+<!DOCTYPE html>
+<html lang="ru"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=yes"><title>Hanvon WebView Inspector v2</title><style>body{font-family:Arial,sans-serif;margin:0;padding:16px;background:#fff;color:#111;font-size:16px}h1{font-size:23px}h2{font-size:19px;margin-top:20px}button{font-size:17px;display:block;padding:14px;margin:9px 0;width:100%;background:#eee;border:2px solid #222;color:#111;border-radius:6px}pre{white-space:pre-wrap;overflow-wrap:anywhere;border:1px solid #777;background:#f6f6f6;padding:12px;font-size:13px;line-height:1.55}small{font-size:13px} .ok{font-weight:bold} textarea{width:100%;height:160px;box-sizing:border-box;font-size:13px}</style></head><body>
+<h1>Hanvon WebView Inspector v2</h1><p>Проверяет окружение страницы и признаки Android JS Bridge. <b>Не вызывает найденные методы</b>, ничего не устанавливает и не отправляет данные на сервер.</p>
+<button id="run" type="button">Запустить диагностику</button><button id="copy" type="button">Скопировать отчёт</button><button id="select" type="button">Показать текст для копирования</button><p id="status">Готов к проверке.</p>
+<h2>Отчёт</h2><pre id="report">Нажмите «Запустить диагностику».</pre><textarea id="txt" style="display:none" readonly></textarea>
 <script>
 (function(){
-var info=document.getElementById('info'), log=document.getElementById('log');
-info.textContent='User-Agent: '+navigator.userAgent+'\nJavaScript: включён\nURL: '+location.href;
-var links=document.querySelectorAll('a');
-for(var i=0;i<links.length;i++){
-  links[i].addEventListener('click',function(){
-    var line=document.createElement('div');line.textContent='Нажата: '+this.textContent.replace(/\s+/g,' ').trim();
-    if(log.textContent==='Пока нет событий')log.textContent='';
-    log.insertBefore(line,log.firstChild);
-  });
-}
+'use strict';
+var report='';
+function safe(fn){try{return fn()}catch(e){return 'ERROR: '+String(e&&e.message||e)}}
+function feature(label, fn){return label+': '+safe(fn)}
+function listOwnNames(obj){return safe(function(){return Object.getOwnPropertyNames(obj)})}
+function diagnostic(){
+ var lines=[];
+ lines.push('HANVON WEBVIEW INSPECTOR V2');
+ lines.push('Date: '+new Date().toISOString());
+ lines.push('Page: '+location.protocol+'//'+location.host+location.pathname);
+ lines.push('');
+ lines.push('ENVIRONMENT');
+ lines.push(feature('User-Agent',function(){return navigator.userAgent}));
+ lines.push(feature('Platform',function(){return navigator.platform}));
+ lines.push(feature('Language',function(){return navigator.language}));
+ lines.push(feature('Languages',function(){return (navigator.languages||[]).join(', ')}));
+ lines.push(feature('Viewport',function(){return innerWidth+' x '+innerHeight}));
+ lines.push(feature('Touch points',function(){return navigator.maxTouchPoints}));
+ lines.push(feature('Android UA token',function(){var m=navigator.userAgent.match(/Android\s+([\d.]+)/i);return m?m[1]:'not found'}));
+ lines.push(feature('WebView token',function(){var m=navigator.userAgent.match(/\bwv\b|; wv\)/i);return m?m[0]:'not found'}));
+ lines.push('');
+ lines.push('BROWSER CAPABILITIES');
+ var caps=['fetch','Promise','WebAssembly','indexedDB','localStorage','sessionStorage','crypto','TextEncoder','URL','Blob','FileReader','showOpenFilePicker','open','postMessage','serviceWorker'];
+ for(var i=0;i<caps.length;i++){(function(name){lines.push(feature(name,function(){return name==='serviceWorker'?('serviceWorker' in navigator):name in window}))})(caps[i])}
+ lines.push(feature('window.top === window',function(){return top===window}));
+ lines.push(feature('document.referrer',function(){return document.referrer||'(empty)'}));
+ lines.push('');
+ lines.push('POSSIBLE BRIDGE OBJECTS');
+ var names=listOwnNames(window);
+ if(typeof names==='string')lines.push(names);
+ else{
+  var patterns=/android|native|bridge|java|jsinterface|javascriptinterface|hanvon|reader|ebook|webkit|device|hostapp|appinterface|client/i;
+  var suspects=[];
+  for(var j=0;j<names.length;j++)if(patterns.test(names[j]))suspects.push(names[j]);
+  if(!suspects.length)lines.push('No names matched heuristic patterns. This does NOT prove no bridge exists.');
+  for(var k=0;k<suspects.length;k++){
+   var n=suspects[k];
+   var typ=safe(function(){return typeof window[n]});
+   // Names and types only; avoid introspecting/calling native bridge methods.
+   lines.push('- '+n+' ('+typ+')');
+  }
+  lines.push('Total window own properties: '+names.length);
+ }
+ lines.push('');
+ lines.push('KNOWN BRIDGE NAMES (presence only)');
+ var known=['Android','android','Native','native','JSBridge','WebViewJavascriptBridge','Hanvon','hanvon','App','app','webkit'];
+ for(var q=0;q<known.length;q++){(function(n){lines.push(feature(n,function(){return Object.prototype.hasOwnProperty.call(window,n)?'present ('+typeof window[n]+')':'not exposed as own property'}))})(known[q])}
+ lines.push('');
+ lines.push('INTERPRETATION');
+ lines.push('Found names are NOT evidence that they can open system settings. No native methods were invoked.');
+ lines.push('Absent names do NOT exclude a bridge with an unusual name.');
+ report=lines.join('\n');
+ document.getElementById('report').textContent=report;
+ document.getElementById('txt').value=report;
+ document.getElementById('status').textContent='Диагностика завершена. Данные остаются на этой странице.';
+ }
+ document.getElementById('run').onclick=diagnostic;
+ document.getElementById('copy').onclick=function(){
+  if(!report){diagnostic()}
+  var el=document.getElementById('txt');el.style.display='block';el.value=report;el.focus();el.select();
+  if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(report).then(function(){document.getElementById('status').textContent='Отчёт скопирован.'},function(){document.getElementById('status').textContent='Автокопирование недоступно. Выделите текст ниже вручную.'})}
+  else document.getElementById('status').textContent='Выделенный отчёт можно скопировать вручную.';
+ };
+ document.getElementById('select').onclick=function(){if(!report)diagnostic();var el=document.getElementById('txt');el.style.display='block';el.value=report;el.focus();el.select();document.getElementById('status').textContent='Текст отчёта выделен.'};
+ diagnostic();
 })();
-</script>
-<p><strong>Важно:</strong> даже если вызовы не сработали, это не доказывает, что ADB или установка APK невозможны. WebView может просто блокировать нестандартные URI.</p>
-</body>
-</html>
+</script></body></html>
